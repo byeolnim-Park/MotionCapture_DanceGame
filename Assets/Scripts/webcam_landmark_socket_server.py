@@ -92,9 +92,13 @@ def binder(client_socket, addr):
                 client_socket.sendall(data) #데이터 내용 송신
     except:
         print("Except : ",addr) #접속 중단
+        client_socket.close() # 접속 중단 시 close
+        cap.release()
+        exit(0)
     finally:
         client_socket.close() # 접속 중단 시 close
         cap.release()
+        exit(0)
 
 server_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM) # 소켓 생성
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # 소켓 레벨 및 데이터 형식 설정
@@ -112,4 +116,5 @@ except:
 finally:
     cap.release()
     server_socket.close()
+    exit(0)
 

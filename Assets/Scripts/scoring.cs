@@ -16,12 +16,17 @@ public class scoring : MonoBehaviour
     GameObject PlayerChar;
     PlayerLandmarkWebcam PlayerLD;
     public TMP_Text score_txt;
+    public TMP_Text score_num;
+    Animator score_anim;
+    ParticleSystem score_particle;
 
     // Start is called before the first frame update
     void Start()
     {
         PlayerChar = GameObject.FindWithTag("Player");
         PlayerLD = PlayerChar.GetComponent<PlayerLandmarkWebcam>();
+        score_anim = score_txt.GetComponent<Animator>();
+        score_particle = score_txt.GetComponent<ParticleSystem>();
     }
 
     // Update is called once per frame
@@ -82,14 +87,17 @@ public class scoring : MonoBehaviour
             for (int j = 0; j < similarity.GetLength(1); j++) score += similarity[i, j];
         }
 
-        score /= similarity.Length;
+        score = score / similarity.Length * 100;
 
         //perfect~bad 판정 필요.
-        if (score > 0.85) scoretext = "Perfect\n";
-        else if (score > 0.70) scoretext = "good\n";
-        else scoretext = "bad\n";
+        if (score > 85) scoretext = "Perfect";
+        else if (score > 70) scoretext = "good";
+        else scoretext = "bad";
 
-        score_txt.text = scoretext + score;
+        score_txt.text = scoretext;
+        score_num.text = score.ToString("F3");
+        score_anim.SetTrigger("score_trg");
+        score_particle.Play();
         Debug.Log("score = " + score);
 
     }
