@@ -14,14 +14,17 @@ public class DancerLandmarkLoad : MonoBehaviour
     int sequence_len = 30;
     float[,,] landmark_stream;
     float[,] one_landmark;
+    
 
     float delay=0;
     float start_time;
     int total_frame;
     int frame_count = 0 ;
     int sub_frame = 0;
+    int scoring_count = 0; //스코어링 횟수
+    int current_frame = 0;
 
-    float tmp;
+    float tmp = 0.0f;
     
     int scale = -1;
     bool is_init = true;
@@ -47,7 +50,9 @@ public class DancerLandmarkLoad : MonoBehaviour
         char_controller = GetComponent<CharacterController>();
         score = GameObject.Find("score calculator").GetComponent<scoring>();
         director = GameObject.Find("Director").GetComponent<director>();
+
         landmark_stream = new float[sequence_len, 34, 3];
+        one_landmark = ret_landmark(textValue, 0);
 
         start_time = Time.time;
     }
@@ -55,15 +60,17 @@ public class DancerLandmarkLoad : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Time.time-start_time > delay) // 프레임 딜레이 조절
+        if(Time.time-start_time > delay/1000) // 프레임 딜레이 조절
         {
-            //Debug.Log("delay time = "+ (Time.time - start_time));
+            //Debug.Log("dancer Delay = "+ (Time.time - start_time));
             start_time = Time.time;
+            Debug.Log(Time.time * delay);
+            current_frame = Convert.ToInt32(Time.time * delay);
+            Debug.Log("frame: " + current_frame);
 
-            one_landmark = ret_landmark(textValue);
-            tmp = Time.time;
+            one_landmark = ret_landmark(textValue, current_frame);
+
             //준비된 랜드마크 스트림 중 한 프레임을 취득하여 모션캡처.
-            //간소화 필요해보임...
             if (is_init)
             {
                 char_controller.set_initpos(one_landmark);
@@ -71,51 +78,76 @@ public class DancerLandmarkLoad : MonoBehaviour
             }
             char_controller.PoseUpdate(char_controller.Init(), one_landmark);
 
-            frame_count++;
-            sub_frame++;
-            if (sub_frame == sequence_len)
+            if (current_frame % sequence_len == 0) //0이 아닐 수도 있음....조건식 다시 생각 필요
             {
-                sub_frame = 0;
                 //스코어링 실행
+                landmark_stream = ret_landmark_stream(textValue, scoring_count*sequence_len);
                 score.DTW_CosSim_Score(landmark_stream);
+                scoring_count++;
             }
-
-            //Debug.Log("tmp = " + (Time.time - tmp));
+            //프레임이 끝나면 종료
         }
-        //프레임이 끝나면 종료하는 코드 필요
-        if(frame_count == total_frame)
+        if (current_frame >= total_frame)
         {
             Debug.Log("game finished");
             director.Game_Finish();
         }
-
     }
 
-    public float[,] ret_landmark(string[] textValue)
+    //모션캡처를 위해 한 랜드마크 리턴
+    public float[,] ret_landmark(string[] textValue, int idx)
     {
         float[,] landmark = new float[34, 3];
         float tmp;
         float fps =0 ;
 
-        textValue[frame_count] = textValue[frame_count].Replace("[", "");
-        textValue[frame_count] = textValue[frame_count].Replace("]", "");
-        textValue[frame_count] = textValue[frame_count].Replace("{", "");
-        textValue[frame_count] = textValue[frame_count].Replace("}", "");
+        textValue[idx] = textValue[idx].Replace("[", "");
+        textValue[idx] = textValue[idx].Replace("]", "");
+        textValue[idx] = textValue[idx].Replace("{", "");
+        textValue[idx] = textValue[idx].Replace("}", "");
 
-        string[] splited = textValue[frame_count].Split(',');
+        string[] splited = textValue[idx].Split(',');
         fps = Convert.ToSingle(splited[0]);
         for (int j = 0; j < 34; j++)
         {
             for (int k = 0; k < 3; k++)
             {
                 tmp = Convert.ToSingle(splited[j * 3 + k + 1]) * scale;
-                landmark_stream[sub_frame, j, k] = tmp;
                 landmark[j, k] = tmp;
             }
         }
 
-        delay = fps / 1000;
+        delay = fps;
         //Debug.Log("delay = "+delay);
+
+        return landmark;
+    }
+
+    //스코어링을 위해 한 시퀀스만큼 랜드마크 리턴
+    public float[,,] ret_landmark_stream(string[] textValue, int idx)
+    {
+        float[,,] landmark = new float[sequence_len,34, 3];
+        float tmp;
+        float fps = 0;
+        
+        for(int i = 0; i < sequence_len; i++)
+        {
+            textValue[idx+i] = textValue[idx+i].Replace("[", "");
+            textValue[idx+i] = textValue[idx+i].Replace("]", "");
+            textValue[idx+i] = textValue[idx+i].Replace("{", "");
+            textValue[idx+i] = textValue[idx+i].Replace("}", "");
+
+            string[] splited = textValue[idx+i].Split(',');
+            fps = Convert.ToSingle(splited[0]);
+            for (int j = 0; j < 34; j++)
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    tmp = Convert.ToSingle(splited[j * 3 + k + 1]) * scale;
+                    landmark[i, j, k] = tmp;
+                }
+            }
+        }
 
         return landmark;
     }

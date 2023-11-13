@@ -18,6 +18,7 @@ public class PlayerLandmarkWebcam : MonoBehaviour
     float[,,] landmark_stream = new float[50, 34, 3];
 
     float delay = 0.0f;
+    float start_time;
     int scale = -1;
     string[] textValue;
     Socket client;
@@ -33,6 +34,7 @@ public class PlayerLandmarkWebcam : MonoBehaviour
         webcam_Process_Start();
         char_controller = GetComponent<CharacterController>();
         director = GameObject.Find("Director").GetComponent<director>();
+        start_time = Time.time;
     }
 
     // Update is called once per frame
@@ -40,6 +42,8 @@ public class PlayerLandmarkWebcam : MonoBehaviour
     {
         if (client.Connected == true)
         {
+            UnityEngine.Debug.Log("player_delay = "+ (Time.time - start_time));
+            start_time = Time.time;
             director.Connect_Success();
             var data = Encoding.UTF8.GetBytes("this message is sent from C# client. Please send landmark data.");
 

@@ -98,7 +98,7 @@ public class scoring : MonoBehaviour
         score_num.text = score.ToString("F3");
         score_anim.SetTrigger("score_trg");
         score_particle.Play();
-        Debug.Log("score = " + score);
+        //Debug.Log("score = " + score);
 
     }
 
