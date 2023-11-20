@@ -13,7 +13,7 @@ public class PlayerLandmarkWebcam : MonoBehaviour
 {
     private CharacterController char_controller;
     private director director;
-    int sequence_len = 30;
+    private AudioSource music;
     float[,] landmark = new float[34, 3];
     float[,,] landmark_stream = new float[50, 34, 3];
 
@@ -31,8 +31,15 @@ public class PlayerLandmarkWebcam : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        process = new Process();
+        process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+        process.StartInfo.FileName = @"python";
+        process.StartInfo.Arguments = @"Assets/Scripts/webcam_landmark_socket_server.py";
+        process.Start();
+        //Thread.Sleep(1000); // 모든 유니티 프로세스가 멈춰버림!!
         webcam_Process_Start();
         char_controller = GetComponent<CharacterController>();
+        music = GetComponent<AudioSource>();
         director = GameObject.Find("Director").GetComponent<director>();
         start_time = Time.time;
     }
@@ -42,8 +49,9 @@ public class PlayerLandmarkWebcam : MonoBehaviour
     {
         if (client.Connected == true)
         {
-            UnityEngine.Debug.Log("player_delay = "+ (Time.time - start_time));
-            start_time = Time.time;
+            //UnityEngine.Debug.Log("player_delay = "+ (Time.time - start_time)); //fps 확인용
+            //start_time = Time.time;
+            music.UnPause();
             director.Connect_Success();
             var data = Encoding.UTF8.GetBytes("this message is sent from C# client. Please send landmark data.");
 
@@ -56,23 +64,28 @@ public class PlayerLandmarkWebcam : MonoBehaviour
             data = new byte[BitConverter.ToInt32(data, 0)];
             client.Receive(data, data.Length, SocketFlags.None);
 
-            //랜드마크 추출 및 시퀀스 저장
-            landmark = ret_landmark(Encoding.UTF8.GetString(data));
-            sub_frame++;
-
-            //float[,,] landmark = new float[sequence_len, 34, 3];
-            if (is_init)
+            if (Encoding.UTF8.GetString(data).Equals("not found")) { }
+            else
             {
-                char_controller.set_initpos(landmark);
-                is_init = false;
+                //랜드마크 추출 및 시퀀스 저장
+                landmark = ret_landmark(Encoding.UTF8.GetString(data));
+                sub_frame++;
+
+                //float[,,] landmark = new float[sequence_len, 34, 3];
+                if (is_init)
+                {
+                    music.Play();
+                    char_controller.set_initpos(landmark);
+                    is_init = false;
+                }
+                char_controller.PoseUpdate(char_controller.Init(), landmark);
             }
-            char_controller.PoseUpdate(char_controller.Init(), landmark);
         }
         else
         {
-            //통신 불량, 혹은 게임이 끝나서 소켓 통신을 끊은 경우.
+            //게임이 끝나서 소켓 통신을 끊은 경우.
+            music.Pause(); //왜안되..
             client.Close();
-            process.Kill();
             director.Connect_Error();
         }
     }
@@ -80,13 +93,7 @@ public class PlayerLandmarkWebcam : MonoBehaviour
     public void webcam_Process_Start()
     {
         //플레이어 랜드마크 취득
-        process = new Process();
-        process.StartInfo.FileName = @"python";
-        process.StartInfo.Arguments = @"Assets/Scripts/webcam_landmark_socket_server.py";
-        process.Start();
-
         client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        Thread.Sleep(2000);
         client.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9999));
     }
 

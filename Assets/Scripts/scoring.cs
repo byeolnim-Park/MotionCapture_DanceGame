@@ -20,6 +20,9 @@ public class scoring : MonoBehaviour
     Animator score_anim;
     ParticleSystem score_particle;
 
+    float score_sum = 0.0f;
+    int scoring_count = 0;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -85,6 +88,12 @@ public class scoring : MonoBehaviour
         for (int i = 0; i < similarity.GetLength(0); i++)
         {
             for (int j = 0; j < similarity.GetLength(1); j++) score += similarity[i, j];
+        }
+
+        if (float.IsNaN(score) != true)
+        {
+            score_sum += score / similarity.Length ;
+            scoring_count += 1;
         }
 
         score = score / similarity.Length * 100;
@@ -227,5 +236,12 @@ public class scoring : MonoBehaviour
     float cos_sim(Vector2 v1, Vector2 v2)
     {
         return Vector2.Dot(v1, v2) / (v1.magnitude * v2.magnitude);
+    }
+
+    public float ret_final_score()
+    {
+        Debug.Log("sum = " + score_sum);
+        Debug.Log("count = " + scoring_count);
+        return score_sum / scoring_count * 100;
     }
 }

@@ -8,23 +8,23 @@ public class DancerLandmarkLoad : MonoBehaviour
     private director director;
     private CharacterController char_controller;
     private scoring score;
-    public string song_name;
+    private int song_number;
     string[] textValue;
 
-    int sequence_len = 30;
+    string[] song_name = { "Mary Had A Little Lamb", "Springtime Family Band", "Robot Boogie" };
+    int[] sequence_len = { 42,37,30 }; //**
+    int[] start_frame = { 45,80,70 }; //**
     float[,,] landmark_stream;
     float[,] one_landmark;
-    
 
-    float delay=0;
+    float delay=30;
+    float init_time;
     float start_time;
-    int total_frame;
-    int frame_count = 0 ;
-    int sub_frame = 0;
-    int scoring_count = 0; //스코어링 횟수
-    int current_frame = 0;
 
-    float tmp = 0.0f;
+    int total_frame; //댄서 랜드마크 총 프레임*
+
+    int scoring_count = 0; //스코어링 횟수
+    int current_frame = 0; //댄서 랜드마크 속 현재 프레임
     
     int scale = -1;
     bool is_init = true;
@@ -32,8 +32,9 @@ public class DancerLandmarkLoad : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        song_number = GameObject.Find("MapNumber").GetComponent<MapNumber>().map_number;
         //댄서 랜드마크 취득
-        string path = @"Assets//Scripts//result//" + song_name + ".txt";
+        string path = @"Assets//Scripts//result//" + song_name[song_number] + "_landmarks.txt";
         textValue = System.IO.File.ReadAllLines(path);
         total_frame = textValue.Length;
 
@@ -51,10 +52,11 @@ public class DancerLandmarkLoad : MonoBehaviour
         score = GameObject.Find("score calculator").GetComponent<scoring>();
         director = GameObject.Find("Director").GetComponent<director>();
 
-        landmark_stream = new float[sequence_len, 34, 3];
+        landmark_stream = new float[sequence_len[song_number], 34, 3];
         one_landmark = ret_landmark(textValue, 0);
 
-        start_time = Time.time;
+        init_time = Time.time;
+        start_time = init_time;
     }
 
     // Update is called once per frame
@@ -64,9 +66,15 @@ public class DancerLandmarkLoad : MonoBehaviour
         {
             //Debug.Log("dancer Delay = "+ (Time.time - start_time));
             start_time = Time.time;
-            Debug.Log(Time.time * delay);
-            current_frame = Convert.ToInt32(Time.time * delay);
-            Debug.Log("frame: " + current_frame);
+            current_frame = Convert.ToInt32((Time.time-init_time) * delay) + start_frame[song_number];
+            Debug.Log("frame: " + current_frame +" / "+total_frame + " / time: "+Time.time);
+
+            if (current_frame >= total_frame)
+            {
+                Debug.Log(score.ret_final_score());
+                Debug.Log("game finished");
+                director.Game_Finish();
+            }
 
             one_landmark = ret_landmark(textValue, current_frame);
 
@@ -78,19 +86,14 @@ public class DancerLandmarkLoad : MonoBehaviour
             }
             char_controller.PoseUpdate(char_controller.Init(), one_landmark);
 
-            if (current_frame % sequence_len == 0) //0이 아닐 수도 있음....조건식 다시 생각 필요
+            if ((current_frame - start_frame[song_number]) / sequence_len[song_number] == (scoring_count+1)) 
             {
                 //스코어링 실행
-                landmark_stream = ret_landmark_stream(textValue, scoring_count*sequence_len);
+                landmark_stream = ret_landmark_stream(textValue, scoring_count* sequence_len[song_number]);
                 score.DTW_CosSim_Score(landmark_stream);
                 scoring_count++;
             }
             //프레임이 끝나면 종료
-        }
-        if (current_frame >= total_frame)
-        {
-            Debug.Log("game finished");
-            director.Game_Finish();
         }
     }
 
@@ -117,7 +120,7 @@ public class DancerLandmarkLoad : MonoBehaviour
             }
         }
 
-        delay = fps;
+        //delay = fps ;  //파이썬에서 잘못 계산되어 들어옴!!
         //Debug.Log("delay = "+delay);
 
         return landmark;
@@ -126,11 +129,11 @@ public class DancerLandmarkLoad : MonoBehaviour
     //스코어링을 위해 한 시퀀스만큼 랜드마크 리턴
     public float[,,] ret_landmark_stream(string[] textValue, int idx)
     {
-        float[,,] landmark = new float[sequence_len,34, 3];
+        float[,,] landmark = new float[sequence_len[song_number], 34, 3];
         float tmp;
         float fps = 0;
         
-        for(int i = 0; i < sequence_len; i++)
+        for(int i = 0; i < sequence_len[song_number]; i++)
         {
             textValue[idx+i] = textValue[idx+i].Replace("[", "");
             textValue[idx+i] = textValue[idx+i].Replace("]", "");
