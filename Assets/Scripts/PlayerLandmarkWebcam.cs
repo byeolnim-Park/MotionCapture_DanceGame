@@ -34,7 +34,8 @@ public class PlayerLandmarkWebcam : MonoBehaviour
         process = new Process();
         process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
         process.StartInfo.FileName = @"python";
-        process.StartInfo.Arguments = @"Assets/Scripts/webcam_landmark_socket_server.py";
+        //process.StartInfo.Arguments = @"Assets/StreamingAssets/webcam_landmark_socket_server.py";
+        process.StartInfo.Arguments = Application.streamingAssetsPath + "/webcam_landmark_socket_server.py";
         process.Start();
         //Thread.Sleep(1000); // 모든 유니티 프로세스가 멈춰버림!!
         webcam_Process_Start();

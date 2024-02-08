@@ -34,7 +34,8 @@ public class DancerLandmarkLoad : MonoBehaviour
     {
         song_number = GameObject.Find("MapNumber").GetComponent<MapNumber>().map_number;
         //¥Ìº≠ ∑£µÂ∏∂≈© √ÎµÊ
-        string path = @"Assets//Scripts//result//" + song_name[song_number] + "_landmarks.txt";
+        string song_file_name = song_name[song_number] + "_landmarks.txt";
+        string path = System.IO.Path.Combine(Application.streamingAssetsPath, song_file_name);
         textValue = System.IO.File.ReadAllLines(path);
         total_frame = textValue.Length;
 

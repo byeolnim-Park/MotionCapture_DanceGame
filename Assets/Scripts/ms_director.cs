@@ -36,4 +36,9 @@ public class ms_director : MonoBehaviour
         song_number.map_number = 2;
         SceneManager.LoadScene("Stage Scene");
     }
+
+    public void Quit()
+    {
+        Application.Quit();
+    }
 }

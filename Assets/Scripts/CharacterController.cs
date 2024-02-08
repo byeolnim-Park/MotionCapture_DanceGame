@@ -7,14 +7,12 @@ public class CharacterController : MonoBehaviour
 {
     public class currentJoint
     {
-        public Transform Transform = null;
-        public Vector3 InitPos;
-        public Quaternion InitRot;
-        public Quaternion InitInverse;
-        public Quaternion InverseRotation;
-        public currentJoint Child;
-        public Vector3 Pos3D;
-        public int LMnum;
+        public Transform Transform = null; // 휴머노이드 모델의 각 관절로부터 가져올 transfrom 값
+        public Quaternion InitRot; // 이전 상태의 관절 회전값
+        public Quaternion InitInverse; // 자식 관절이 있는 관절의 역회전값
+        public Quaternion InverseRotation; // InitInverse*InitRot
+        public currentJoint Child; // 하위 관절 인스턴스
+        public Vector3 Pos3D; // 다음 상태의 관절 위치(랜드마크)
     }
 
     private Vector3 initPosition; //초기 위치

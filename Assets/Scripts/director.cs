@@ -15,6 +15,7 @@ public class director : MonoBehaviour
 
     public AudioClip[] music = new AudioClip[3];
     bool player_connect_tog = false;
+    bool isFinish = false;
 
     // Start is called before the first frame update
     void Start()
@@ -41,24 +42,30 @@ public class director : MonoBehaviour
     {
         //토탈 스코어 표시. 게임 데모에서는 목록 화면으로 돌아가기.
         //종료 전 웹캠 끌 것.
+        isFinish = true;
         PlayerLD.Socket_Close();
         SceneManager.LoadScene("Map Select Scene");
     }
 
     public void Connect_Error()
     {
-        float start_time = Time.time;
+        if (isFinish) { SceneManager.LoadScene("Map Select Scene"); }
+        else
+        {
+            float start_time = Time.time;
 
-        player_connect_tog = false;
-        //플레이어 웹 캠 오류 시 해당 상황을 알리며 재 실행
-        UnityEngine.Debug.Log("랜드마크 서버와의 연결이 끊겼습니다.");
-        //PlayerChar.SetActive(false);
-        connect_txt.SetActive(true);
+            player_connect_tog = false;
+            //플레이어 웹 캠 오류 시 해당 상황을 알리며 재 실행
+            UnityEngine.Debug.Log("랜드마크 서버와의 연결이 끊겼습니다.");
+            //PlayerChar.SetActive(false);
+            connect_txt.SetActive(true);
         
-        //웹캠 재실행
-        //PlayerChar.SetActive(true);
-        PlayerLD.webcam_Process_Start();
-        connect_txt.SetActive(false);
+            //웹캠 재실행
+            //PlayerChar.SetActive(true);
+            PlayerLD.webcam_Process_Start();
+            connect_txt.SetActive(false);
+        }
+
     }
 
     public void Connect_Success()
